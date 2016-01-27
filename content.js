@@ -11,25 +11,6 @@
 // default reply text.
 var replyText = 'Thanks for the input. Did you want this to be an answer, instead of a comment?';
 
-/**
- * listens for events coming from the popup.
- */
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  console.log('got request of ' + request + ', type = ' + request.type);
-  if ('Butler Popup' == request.type) {
-      console.log('got popup msg, txt = ' + request.replyText);
-      replyText = request.replyText;
-      // find all comments, add the butler button
-      // after all that don't already have it...
-      var comments = $("div.threaded_comment");
-      var timestamps = comments.find("span.timestamp[butler!='butler']");
-      timestamps.after(btn);
-      timestamps.attr('butler', 'butler');
-      $('img.butler_button').first().focus();
-  }
-  return true;
-});
-
 // find the URL of the butler button image.
 // the advantage of doing it this way is that you don't
 // need to know the extension id.
@@ -76,4 +57,33 @@ btn.click(function(evt) {
         window.clearInterval(timer);
       }
     }, INTERVAL_IN_MS);
+});
+
+/**
+ * Decorates the undecorated comments with the Butler button
+ * the comments to arrive.
+ */
+function decorateComments() {
+  var comments = $("div.threaded_comment");
+  var timestamps = comments.find("span.timestamp[butler!='butler']");
+  btn.attr('title', replyText);
+  timestamps.after(btn);
+  timestamps.attr('butler', 'butler');
+};
+
+decorateComments();
+
+/**
+ * listens for events coming from the popup.
+ */
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  console.log('got request of ' + request + ', type = ' + request.type);
+  if ('Butler Popup' == request.type) {
+      console.log('got popup msg, txt = ' + request.replyText);
+      replyText = request.replyText;
+      // all existing buttons need their tooltips changed:
+      $('img.butler_button').attr('title', replyText);
+      decorateComments();
+  }
+  return true;
 });
